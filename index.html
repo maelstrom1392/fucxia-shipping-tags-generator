@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fucxia Tags - Pure Edition</title>
+    <title>Fucxia Tags - Max Remitente Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root { --fucxia: #EF157C; --black: #000000; --red: #d32f2f; --bg: #f4f7f6; }
@@ -311,6 +311,34 @@
         }
         
         doc.setGState(new doc.GState({opacity: 1}));
+        
+        // --- Cálculo del Remitente Dinámico ---
+        const remitenteText = "DE: " + document.getElementById('remitente').value;
+        const remitenteAreaW = usableW - logoSize - 5;
+        let rFS = 30; // Empezamos con un tamaño grande
+        let rLines = [];
+        
+        doc.setFont("helvetica", "bold");
+        while(rFS > 6) {
+            doc.setFontSize(rFS);
+            rLines = doc.splitTextToSize(remitenteText, remitenteAreaW);
+            // Verificamos que quepa en máximo 2 líneas y que el alto total no supere el logo
+            const totalHeight = rLines.length * rFS * 0.5; // Aproximación de altura de línea
+            if(rLines.length <= 2 && totalHeight <= (logoSize)) break;
+            rFS -= 0.5;
+        }
+        
+        doc.setTextColor(239, 21, 124);
+        doc.setFontSize(rFS);
+        // Centrado vertical respecto al logo
+        const totalTextH = rLines.length * (rFS * 0.35); 
+        const rY = y + 2 + (logoSize / 2) - totalTextH + (rFS * 0.2);
+        
+        rLines.forEach((line, i) => {
+            doc.text(line, x + margin + logoSize + 5, rY + (i * rFS * 0.45));
+        });
+
+        // --- Cuerpo de la Etiqueta ---
         const startY = lineY + 2;
         const lines = [{l: "PARA: ", c: data.nombre}, {l: "DNI: ", c: data.dni}, {l: "CEL: ", c: data.cel}, {l: "DESTINO: ", c: data.destino}];
         
@@ -327,9 +355,6 @@
             if(fits) break;
             fontSize -= 1;
         }
-
-        doc.setTextColor(239, 21, 124); doc.setFontSize(14); doc.setFont("helvetica", "bold");
-        doc.text("DE: " + document.getElementById('remitente').value, x + margin + logoSize + 5, y + (logoSize/2) + 2);
 
         let curY = startY + (fontSize * 0.7);
         lines.forEach(obj => {
