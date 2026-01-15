@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fucxia Tags V3.0 - Secure & Connected</title>
+    <title>Fucxia Tags V3.0 - Full Connection</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root { --fucxia: #EF157C; --black: #000000; --red: #d32f2f; --bg: #f4f7f6; }
@@ -21,20 +21,21 @@
         .input-group { margin-bottom: 15px; position: relative; width: 100%; }
         label.field-title { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; color: #555; }
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        textarea#destino { resize: vertical; min-height: 80px; }
+        textarea#destino { resize: vertical; min-height: 80px; text-transform: uppercase; }
         .btn-main { background: var(--fucxia); color: white; border: none; padding: 18px; border-radius: 10px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 5px; }
-        .btn-shalom { background: var(--red); color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; margin-top: 8px; cursor: pointer; font-weight: bold; }
+        .btn-shalom { background: var(--red); color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; margin-top: 8px; cursor: pointer; font-weight: bold; font-size: 14px; }
         .history-section { width: 95%; max-width: 1100px; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 40px; }
         .table-container { overflow-x: auto; width: 100%; }
         .history-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
-        .history-table th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #eee; color: #666; }
+        .history-table th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #eee; color: #666; text-transform: uppercase; }
         .history-table td { padding: 12px; border-bottom: 1px solid #f1f1f1; vertical-align: middle; }
         .suggestion-box { position: absolute; background: white; border: 1px solid #ddd; width: 100%; z-index: 100; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
         .suggestion-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
         .backup-controls { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; }
         .action-btns { display: flex; gap: 8px; }
-        .btn-load { background: var(--fucxia); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-delete-reg { background: #eee; color: #666; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-load { background: var(--fucxia); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        .btn-delete-reg { background: #eee; color: #666; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        .btn-delete-reg:hover { background: var(--red); color: white; }
         @media (min-width: 600px) { .backup-controls { flex-direction: row; } }
         .hidden { display: none !important; }
     </style>
@@ -83,10 +84,10 @@
 
     <div class="input-group">
         <label class="field-title">Nombre del Cliente</label>
-        <input type="text" id="cliente" placeholder="Nombre completo" autocomplete="off" oninput="forceUpper(this); searchByField('nombre', 'cliente', 'suggestionsName')">
+        <input type="text" id="cliente" placeholder="Nombre completo" autocomplete="off" oninput="this.value = this.value.toUpperCase(); searchByField('nombre', 'cliente', 'suggestionsName')">
         <div id="suggestionsName" class="suggestion-box"></div>
     </div>
-
+    
     <div class="dimensions" style="padding:0; background:none;">
         <div class="input-group">
             <label class="field-title">DNI</label>
@@ -107,13 +108,13 @@
         </select>
         <div id="shalomActionBox"><button class="btn-shalom" onclick="window.open('https://agencias.shalom.pe/', '_blank')">🔍 BUSCAR AGENCIA SHALOM</button></div>
         <div id="boxOthers" class="hidden" style="background: #f0f7ff; padding: 10px; border-radius: 8px; margin-top: 10px;">
-            <label class="field-title">Agencia:</label><input type="text" id="manualCourier" placeholder="Nombre de la agencia" oninput="forceUpper(this)">
+            <label class="field-title">Agencia:</label><input type="text" id="manualCourier" placeholder="Nombre de la agencia" oninput="this.value = this.value.toUpperCase()">
         </div>
     </div>
 
     <div class="input-group">
         <label class="field-title">Destino</label>
-        <textarea id="destino" placeholder="Dirección de Oficina / Agencia" oninput="forceUpper(this)"></textarea>
+        <textarea id="destino" placeholder="Dirección de Oficina / Agencia" oninput="this.value = this.value.toUpperCase()"></textarea>
     </div>
 
     <button class="btn-main" onclick="processTag()">GENERAR ETIQUETA</button>
@@ -125,21 +126,21 @@
         <table class="history-table">
             <thead>
                 <tr>
-                    <th width="15%">Fecha / Hora</th>
-                    <th width="18%">Nombre</th>
-                    <th width="10%">DNI</th>
-                    <th width="10%">Teléfono</th>
-                    <th width="10%">Empresa</th>
-                    <th width="22%">Dirección</th>
-                    <th width="15%">Acción</th>
+                    <th>Fecha / Hora</th>
+                    <th>Nombre</th>
+                    <th>DNI</th>
+                    <th>Teléfono</th>
+                    <th>Empresa</th>
+                    <th>Dirección</th>
+                    <th>Acción</th>
                 </tr>
             </thead>
             <tbody id="historyBody"></tbody>
         </table>
     </div>
     <div class="backup-controls">
-        <button class="btn-backup" onclick="exportData()">📥 EXPORTAR BACKUP</button>
-        <button class="btn-import" onclick="document.getElementById('importFile').click()">📤 IMPORTAR BACKUP</button>
+        <button style="background: #4a5568; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer;" onclick="exportData()">📥 EXPORTAR BACKUP</button>
+        <button style="background: #718096; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer;" onclick="document.getElementById('importFile').click()">📤 IMPORTAR BACKUP</button>
         <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(this)">
     </div>
 </div>
@@ -149,15 +150,14 @@
     let directory = JSON.parse(localStorage.getItem('directory') || "[]");
     let wmkRatio = 0.56;
 
-    window.onload = () => {
-        updateUI();
-        renderHistory();
-        calculateWmkRatio();
+    window.onload = () => { 
+        updateUI(); 
+        renderHistory(); 
+        calculateWmkRatio(); 
         toggleCourier();
-        checkURLParams();
+        checkURLParams(); 
     };
 
-    // SEGURIDAD: Sanitiza textos de la URL para evitar ataques
     function sanitize(str) {
         const temp = document.createElement('div');
         temp.textContent = str;
@@ -167,32 +167,22 @@
     function checkURLParams() {
         const params = new URLSearchParams(window.location.search);
         if (params.has('nombre')) {
-            // Rellenar datos del cliente
             document.getElementById('cliente').value = sanitize(params.get('nombre')).toUpperCase();
             document.getElementById('dni').value = sanitize(params.get('dni') || "");
             document.getElementById('cel').value = sanitize(params.get('cel') || "");
             document.getElementById('destino').value = sanitize(params.get('destino') || "").toUpperCase();
-
-            // Rellenar dimensiones de la caja (Nuevos campos)
             if (params.has('h')) document.getElementById('hCm').value = sanitize(params.get('h'));
             if (params.has('w')) document.getElementById('wCm').value = sanitize(params.get('w'));
-
-            // Configurar Courier
             if (params.has('courier')) {
                 const cVal = sanitize(params.get('courier')).toUpperCase();
                 const sel = document.getElementById('courier');
-                if (cVal === 'SHALOM') {
-                    sel.value = 'SHALOM';
-                } else {
-                    sel.value = 'OTROS';
-                    document.getElementById('manualCourier').value = cVal;
-                }
+                if (cVal === 'SHALOM') { sel.value = 'SHALOM'; } 
+                else { sel.value = 'OTROS'; document.getElementById('manualCourier').value = cVal; }
                 toggleCourier();
             }
         }
     }
 
-    function forceUpper(el) { el.value = el.value.toUpperCase(); }
     function calculateWmkRatio() { if(imgs.wmk) { let img = new Image(); img.src = imgs.wmk; img.onload = function() { wmkRatio = this.height / this.width; } } }
 
     function updateUI() {
@@ -248,6 +238,8 @@
         document.getElementById('dni').value = m.dni;
         document.getElementById('cel').value = m.cel;
         document.getElementById('destino').value = m.destino;
+        if(m.h) document.getElementById('hCm').value = m.h;
+        if(m.w) document.getElementById('wCm').value = m.w;
         if(m.courier) {
             document.getElementById('courier').value = m.courier;
             if(m.courier === 'OTROS') document.getElementById('manualCourier').value = m.manual || "";
@@ -261,16 +253,16 @@
         body.innerHTML = "";
         const sorted = [...directory].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         sorted.forEach((t) => {
-            const dateObj = new Date(t.fecha);
-            const dStr = dateObj.toLocaleDateString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric' });
-            const tStr = dateObj.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit', hour12: true }).toUpperCase();
-            const eStr = t.courier === 'OTROS' ? t.manual : 'SHALOM';
+            const dObj = new Date(t.fecha);
+            const dS = dObj.toLocaleDateString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric' });
+            const tS = dObj.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit', hour12: true }).toUpperCase();
+            const eS = t.courier === 'OTROS' ? t.manual : 'SHALOM';
             body.innerHTML += `<tr>
-                <td style="color:#666">${dStr}<br>${tStr}</td>
+                <td style="color:#666">${dS}<br>${tS}</td>
                 <td><strong>${t.nombre}</strong></td>
                 <td>${t.dni}</td>
                 <td>${t.cel}</td>
-                <td style="color:var(--fucxia); font-weight:bold;">${eStr}</td>
+                <td style="color:var(--fucxia); font-weight:bold;">${eS}</td>
                 <td style="white-space: pre-wrap;">${t.destino}</td>
                 <td><div class="action-btns">
                     <button class="btn-load" onclick='fillData(${JSON.stringify(t)})'>CARGAR</button>
@@ -294,6 +286,8 @@
             dni: document.getElementById('dni').value,
             cel: document.getElementById('cel').value,
             destino: document.getElementById('destino').value.toUpperCase(),
+            h: document.getElementById('hCm').value,
+            w: document.getElementById('wCm').value,
             courier: document.getElementById('courier').value,
             manual: (document.getElementById('courier').value === 'OTROS') ? document.getElementById('manualCourier').value.toUpperCase() : "SHALOM",
             fecha: new Date().toISOString()
@@ -321,7 +315,7 @@
                 directory = data.directory || [];
                 localStorage.setItem('directory', JSON.stringify(directory));
                 renderHistory();
-                alert("Éxito.");
+                alert("Importado.");
             } catch(err) { alert("Error."); }
         };
         reader.readAsText(input.files[0]);
@@ -329,7 +323,7 @@
 
     function drawTag(doc, x, y, w, h, data) {
         doc.setLineWidth(0.26); doc.setDrawColor(0); doc.rect(x, y, w, h);
-        const margin = 5; const usableW = w - (margin * 2);
+        const margin = 5; const usableW = w - (margin * 2); 
         const logoSize = Math.min(h * 0.20, 30);
         const headerPad = logoSize * 0.12;
         if(imgs.tag) doc.addImage(imgs.tag, 'PNG', x + margin, y + headerPad, logoSize, logoSize);
@@ -394,12 +388,6 @@
         else { doc.addPage(); drawTag(doc, xPos, 10, wm, hm, data); }
         doc.save(`Fucxia_Etiqueta_${data.nombre}.pdf`);
     }
-
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.input-group')) {
-            document.querySelectorAll('.suggestion-box').forEach(b => b.style.display = 'none');
-        }
-    });
 </script>
 </body>
 </html>
