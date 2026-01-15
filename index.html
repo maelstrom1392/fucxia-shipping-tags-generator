@@ -167,15 +167,26 @@
     function checkURLParams() {
         const params = new URLSearchParams(window.location.search);
         if (params.has('nombre')) {
+            // Rellenar datos del cliente
             document.getElementById('cliente').value = sanitize(params.get('nombre')).toUpperCase();
             document.getElementById('dni').value = sanitize(params.get('dni') || "");
             document.getElementById('cel').value = sanitize(params.get('cel') || "");
             document.getElementById('destino').value = sanitize(params.get('destino') || "").toUpperCase();
+
+            // Rellenar dimensiones de la caja (Nuevos campos)
+            if (params.has('h')) document.getElementById('hCm').value = sanitize(params.get('h'));
+            if (params.has('w')) document.getElementById('wCm').value = sanitize(params.get('w'));
+
+            // Configurar Courier
             if (params.has('courier')) {
                 const cVal = sanitize(params.get('courier')).toUpperCase();
                 const sel = document.getElementById('courier');
-                if (cVal === 'SHALOM') { sel.value = 'SHALOM'; }
-                else { sel.value = 'OTROS'; document.getElementById('manualCourier').value = cVal; }
+                if (cVal === 'SHALOM') {
+                    sel.value = 'SHALOM';
+                } else {
+                    sel.value = 'OTROS';
+                    document.getElementById('manualCourier').value = cVal;
+                }
                 toggleCourier();
             }
         }
