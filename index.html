@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fucxia Tags V3.0 - Full Connection</title>
+    <title>Fucxia Tags V3.2 - QR Internal Control</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --fucxia: #EF157C; --black: #000000; --red: #d32f2f; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; color: #333; }
@@ -31,18 +32,16 @@
         .history-table td { padding: 12px; border-bottom: 1px solid #f1f1f1; vertical-align: middle; }
         .suggestion-box { position: absolute; background: white; border: 1px solid #ddd; width: 100%; z-index: 100; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
         .suggestion-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
-        .backup-controls { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; }
         .action-btns { display: flex; gap: 8px; }
         .btn-load { background: var(--fucxia); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 10px; }
         .btn-delete-reg { background: #eee; color: #666; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 10px; }
-        .btn-delete-reg:hover { background: var(--red); color: white; }
-        @media (min-width: 600px) { .backup-controls { flex-direction: row; } }
         .hidden { display: none !important; }
+        #qr-container { display: none; } /* Oculto en la web, solo para procesar el PDF */
     </style>
 </head>
 <body>
 
-<div class="container">
+<div id="qr-container"></div> <div class="container">
     <div class="app-logo-container">
         <button class="btn-del-circle" id="delAppMain" onclick="deleteImg('app')">✕</button>
         <img id="appLogoImg">
@@ -50,7 +49,7 @@
             <label for="inApp">📁 SUBIR LOGO APP</label>
             <input type="file" id="inApp" accept="image/*" class="hidden">
         </div>
-        <h2 style="margin: 5px 0; color: var(--fucxia); font-size: 22px;">Fucxia Tags V3.0</h2>
+        <h2 style="margin: 5px 0; color: var(--fucxia); font-size: 22px;">Fucxia Tags V3.2</h2>
     </div>
 
     <div class="logo-section">
@@ -117,7 +116,7 @@
         <textarea id="destino" placeholder="Dirección de Oficina / Agencia" oninput="this.value = this.value.toUpperCase()"></textarea>
     </div>
 
-    <button class="btn-main" onclick="processTag()">GENERAR ETIQUETA</button>
+    <input type="hidden" id="notionUrl"> <button class="btn-main" onclick="processTag()">GENERAR ETIQUETA</button>
 </div>
 
 <div class="history-section">
@@ -138,11 +137,6 @@
             <tbody id="historyBody"></tbody>
         </table>
     </div>
-    <div class="backup-controls">
-        <button style="background: #4a5568; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer;" onclick="exportData()">📥 EXPORTAR BACKUP</button>
-        <button style="background: #718096; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer;" onclick="document.getElementById('importFile').click()">📤 IMPORTAR BACKUP</button>
-        <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(this)">
-    </div>
 </div>
 
 <script>
@@ -150,13 +144,7 @@
     let directory = JSON.parse(localStorage.getItem('directory') || "[]");
     let wmkRatio = 0.56;
 
-    window.onload = () => { 
-        updateUI(); 
-        renderHistory(); 
-        calculateWmkRatio(); 
-        toggleCourier();
-        checkURLParams(); 
-    };
+    window.onload = () => { updateUI(); renderHistory(); calculateWmkRatio(); toggleCourier(); checkURLParams(); };
 
     function sanitize(str) {
         const temp = document.createElement('div');
@@ -173,6 +161,7 @@
             document.getElementById('destino').value = sanitize(params.get('destino') || "").toUpperCase();
             if (params.has('h')) document.getElementById('hCm').value = sanitize(params.get('h'));
             if (params.has('w')) document.getElementById('wCm').value = sanitize(params.get('w'));
+            if (params.has('notion')) document.getElementById('notionUrl').value = params.get('notion');
             if (params.has('courier')) {
                 const cVal = sanitize(params.get('courier')).toUpperCase();
                 const sel = document.getElementById('courier');
@@ -238,6 +227,7 @@
         document.getElementById('dni').value = m.dni;
         document.getElementById('cel').value = m.cel;
         document.getElementById('destino').value = m.destino;
+        document.getElementById('notionUrl').value = m.notion || "";
         if(m.h) document.getElementById('hCm').value = m.h;
         if(m.w) document.getElementById('wCm').value = m.w;
         if(m.courier) {
@@ -288,6 +278,7 @@
             destino: document.getElementById('destino').value.toUpperCase(),
             h: document.getElementById('hCm').value,
             w: document.getElementById('wCm').value,
+            notion: document.getElementById('notionUrl').value,
             courier: document.getElementById('courier').value,
             manual: (document.getElementById('courier').value === 'OTROS') ? document.getElementById('manualCourier').value.toUpperCase() : "SHALOM",
             fecha: new Date().toISOString()
@@ -300,45 +291,76 @@
         generatePDF();
     }
 
-    function exportData() {
-        const blob = new Blob([JSON.stringify({directory})], { type: 'application/json' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-        a.download = `Backup_Fucxia_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-    }
-
-    function importData(input) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const data = JSON.parse(e.target.result);
-                directory = data.directory || [];
-                localStorage.setItem('directory', JSON.stringify(directory));
-                renderHistory();
-                alert("Importado.");
-            } catch(err) { alert("Error."); }
+    async function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const hCm = parseFloat(document.getElementById('hCm').value);
+        const wCm = parseFloat(document.getElementById('wCm').value);
+        const hm = hCm * 10, wm = wCm * 10;
+        const data = { 
+            nombre: document.getElementById('cliente').value.toUpperCase(), 
+            dni: document.getElementById('dni').value, 
+            cel: document.getElementById('cel').value, 
+            courier: document.getElementById('courier').value, 
+            manual: document.getElementById('manualCourier').value, 
+            destino: document.getElementById('destino').value.toUpperCase(),
+            notion: document.getElementById('notionUrl').value
         };
-        reader.readAsText(input.files[0]);
+
+        let orient = (wm > 210) ? 'l' : 'p';
+        const doc = new jsPDF(orient, 'mm', 'a4');
+        const pW = (orient === 'p') ? 210 : 297;
+        const xPos = (pW - wm) / 2;
+
+        // Si hay link de Notion, generar QR
+        let qrBase64 = null;
+        if(data.notion) {
+            const qrContainer = document.getElementById("qr-container");
+            qrContainer.innerHTML = "";
+            const qr = new QRCode(qrContainer, {
+                text: "https://www.notion.so/" + data.notion,
+                width: 100, height: 100,
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            // Esperar un momento a que el QR se genere
+            await new Promise(resolve => setTimeout(resolve, 100));
+            qrBase64 = qrContainer.querySelector("canvas").toDataURL("image/png");
+        }
+
+        await drawTag(doc, xPos, 10, wm, hm, data, qrBase64);
+        doc.addPage();
+        await drawTag(doc, xPos, 10, wm, hm, data, qrBase64);
+        doc.save(`Fucxia_Etiqueta_${data.nombre}.pdf`);
     }
 
-    function drawTag(doc, x, y, w, h, data) {
+    async function drawTag(doc, x, y, w, h, data, qrImg) {
         doc.setLineWidth(0.26); doc.setDrawColor(0); doc.rect(x, y, w, h);
         const margin = 5; const usableW = w - (margin * 2); 
         const logoSize = Math.min(h * 0.20, 30);
         const headerPad = logoSize * 0.12;
+        
         if(imgs.tag) doc.addImage(imgs.tag, 'PNG', x + margin, y + headerPad, logoSize, logoSize);
+        
+        // Dibujar QR interno si existe
+        if(qrImg) {
+            const qrSize = logoSize * 0.5;
+            doc.addImage(qrImg, 'PNG', x + margin + logoSize - (qrSize/2), y + headerPad + logoSize - (qrSize/2), qrSize, qrSize);
+        }
+
         const lineY = y + headerPad + logoSize + headerPad;
         doc.setDrawColor(239, 21, 124); doc.setLineWidth(0.7); doc.line(x, lineY, x + w, lineY);
+        
         if(imgs.wmk) {
             doc.setGState(new doc.GState({opacity: 0.1}));
             const long = Math.max(w, h); const wmkW = long * 0.5; const wmkH = wmkW * wmkRatio;
             if(h > w) doc.addImage(imgs.wmk, 'PNG', x + w/2, y + h/2, wmkH, wmkW, null, 'NONE', 90);
             else doc.addImage(imgs.wmk, 'PNG', x + w/2 - wmkW/2, y + h/2 - wmkH/2, wmkW, wmkH);
         }
+        
         doc.setGState(new doc.GState({opacity: 1}));
         const startYBase = lineY + 1.7;
         const lines = [{l: "PARA: ", c: data.nombre}, {l: "DNI: ", c: data.dni}, {l: "CEL: ", c: data.cel}, {l: "DESTINO: ", c: data.destino}];
         let fontSize = 70; const spacing = 0.44; const limitY = y + h - 3.5;
+        
         while(fontSize > 6) {
             doc.setFontSize(fontSize);
             let checkY = startYBase + (fontSize * 0.75);
@@ -351,6 +373,7 @@
             if(fits) break;
             fontSize -= 0.3;
         }
+
         doc.setTextColor(239, 21, 124); doc.setFont("helvetica", "bold");
         let rFS = 18; let rLines = [];
         while(rFS > 6) {
@@ -361,6 +384,7 @@
         }
         const rY = y + headerPad + (logoSize/2) - ((rLines.length-1)*rFS*0.25) + (rFS*0.2);
         rLines.forEach((rl, i) => doc.text(rl, x + margin + logoSize + 5, rY + (i * rFS * 0.5)));
+
         let curY = startYBase + (fontSize * 0.75);
         lines.forEach(obj => {
             doc.setFontSize(fontSize); doc.setTextColor(239, 21, 124); doc.setFont("helvetica", "bold");
@@ -372,22 +396,11 @@
         });
     }
 
-    function generatePDF() {
-        const { jsPDF } = window.jspdf;
-        let hCm = parseFloat(document.getElementById('hCm').value);
-        let wCm = parseFloat(document.getElementById('wCm').value);
-        const hm = hCm * 10, wm = wCm * 10;
-        const data = { nombre: document.getElementById('cliente').value.toUpperCase(), dni: document.getElementById('dni').value, cel: document.getElementById('cel').value, courier: document.getElementById('courier').value, manual: document.getElementById('manualCourier').value, destino: document.getElementById('destino').value.toUpperCase() };
-        let orient = (wm > 210) ? 'l' : 'p';
-        const doc = new jsPDF(orient, 'mm', 'a4');
-        const pW = (orient === 'p') ? 210 : 297; const pH = (orient === 'p') ? 297 : 210;
-        const xPos = (pW - wm) / 2;
-        drawTag(doc, xPos, 10, wm, hm, data);
-        const nextY = 10 + hm + 10;
-        if(nextY + hm <= pH - 10) drawTag(doc, xPos, nextY, wm, hm, data);
-        else { doc.addPage(); drawTag(doc, xPos, 10, wm, hm, data); }
-        doc.save(`Fucxia_Etiqueta_${data.nombre}.pdf`);
-    }
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.input-group')) {
+            document.querySelectorAll('.suggestion-box').forEach(b => b.style.display = 'none');
+        }
+    });
 </script>
 </body>
 </html>
