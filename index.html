@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fucxia Tags - Max Remitente Edition</title>
+    <title>Fucxia Tags - Fixed Layout</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root { --fucxia: #EF157C; --black: #000000; --red: #d32f2f; --bg: #f4f7f6; }
@@ -312,30 +312,34 @@
         
         doc.setGState(new doc.GState({opacity: 1}));
         
-        // --- Cálculo del Remitente Dinámico ---
+        // --- Cálculo del Remitente Dinámico Corregido ---
         const remitenteText = "DE: " + document.getElementById('remitente').value;
         const remitenteAreaW = usableW - logoSize - 5;
-        let rFS = 30; // Empezamos con un tamaño grande
+        let rFS = 30; 
         let rLines = [];
         
         doc.setFont("helvetica", "bold");
         while(rFS > 6) {
             doc.setFontSize(rFS);
             rLines = doc.splitTextToSize(remitenteText, remitenteAreaW);
-            // Verificamos que quepa en máximo 2 líneas y que el alto total no supere el logo
-            const totalHeight = rLines.length * rFS * 0.5; // Aproximación de altura de línea
-            if(rLines.length <= 2 && totalHeight <= (logoSize)) break;
+            // El alto de línea es rFS * 0.4 aproximadamente en mm
+            const totalH = rLines.length * (rFS * 0.4); 
+            if(rLines.length <= 2 && totalH < (logoSize)) break;
             rFS -= 0.5;
         }
         
         doc.setTextColor(239, 21, 124);
         doc.setFontSize(rFS);
-        // Centrado vertical respecto al logo
-        const totalTextH = rLines.length * (rFS * 0.35); 
-        const rY = y + 2 + (logoSize / 2) - totalTextH + (rFS * 0.2);
+        // Centrado vertical: y + 2 (inicio logo) + logoSize/2 - (altura_texto / 2)
+        const textH = rLines.length * (rFS * 0.4);
+        let curRY = (y + 2) + (logoSize / 2) - (textH / 2) + (rFS * 0.3);
         
-        rLines.forEach((line, i) => {
-            doc.text(line, x + margin + logoSize + 5, rY + (i * rFS * 0.45));
+        // Asegurar que no suba del borde superior del logo
+        if(curRY < (y + 4)) curRY = y + 4;
+
+        rLines.forEach((line) => {
+            doc.text(line, x + margin + logoSize + 5, curRY);
+            curRY += (rFS * 0.45);
         });
 
         // --- Cuerpo de la Etiqueta ---
