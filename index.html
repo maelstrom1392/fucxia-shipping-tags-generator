@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fucxia Shipping Tags Generator V4</title>
+    <title>Fucxia Shipping Tags Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root { --fucxia: #EF157C; --black: #000000; --red: #d32f2f; --bg: #f4f7f6; }
@@ -47,7 +47,7 @@
             <label for="inApp">📁 SUBIR LOGO APP</label>
             <input type="file" id="inApp" accept="image/*" class="hidden">
         </div>
-        <h2 style="margin: 5px 0; color: var(--fucxia); font-size: 22px;">Fucxia Tags</h2>
+        <h2 style="margin: 5px 0; color: var(--fucxia); font-size: 22px;">Fucxia Shipping Tags Generator</h2>
     </div>
 
     <div class="logo-section">
@@ -322,7 +322,6 @@
         while(rFS > 6) {
             doc.setFontSize(rFS);
             rLines = doc.splitTextToSize(remitenteText, remitenteAreaW);
-            // El alto de línea es rFS * 0.4 aproximadamente en mm
             const totalH = rLines.length * (rFS * 0.4); 
             if(rLines.length <= 2 && totalH < (logoSize)) break;
             rFS -= 0.5;
@@ -330,11 +329,9 @@
         
         doc.setTextColor(239, 21, 124);
         doc.setFontSize(rFS);
-        // Centrado vertical: y + 2 (inicio logo) + logoSize/2 - (altura_texto / 2)
         const textH = rLines.length * (rFS * 0.4);
         let curRY = (y + 2) + (logoSize / 2) - (textH / 2) + (rFS * 0.3);
         
-        // Asegurar que no suba del borde superior del logo
         if(curRY < (y + 4)) curRY = y + 4;
 
         rLines.forEach((line) => {
