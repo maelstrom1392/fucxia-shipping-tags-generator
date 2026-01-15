@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fucxia Tags V3.0 - Secure & Connected</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root { --fucxia: #EF157C; --black: #000000; --red: #d32f2f; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; color: #333; }
+        .container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); width: 95%; max-width: 600px; margin-bottom: 20px; box-sizing: border-box; }
+        .app-logo-container { text-align: center; margin-bottom: 15px; position: relative; padding-top: 15px; }
+        #appLogoImg { max-height: 80px; display: none; margin: 0 auto 10px; border-radius: 8px; max-width: 100%; }
+        .btn-del-circle { background: var(--red); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; position: absolute; display: none; z-index: 50; font-weight: bold; line-height: 24px; text-align: center; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #delAppMain { top: 0; right: 0; }
+        .logo-section { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .upload-box { border: 2px dashed #ccc; padding: 10px; border-radius: 10px; text-align: center; cursor: pointer; position: relative; min-height: 80px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .upload-box label { font-size: 10px; font-weight: bold; color: var(--fucxia); cursor: pointer; }
+        .small-preview { max-height: 40px; margin-top: 5px; display: none; border-radius: 4px; }
+        .dimensions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #fff0f6; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        .input-group { margin-bottom: 15px; position: relative; width: 100%; }
+        label.field-title { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; color: #555; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        textarea#destino { resize: vertical; min-height: 80px; }
+        .btn-main { background: var(--fucxia); color: white; border: none; padding: 18px; border-radius: 10px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn-shalom { background: var(--red); color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; margin-top: 8px; cursor: pointer; font-weight: bold; }
+        .history-section { width: 95%; max-width: 1100px; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 40px; }
+        .table-container { overflow-x: auto; width: 100%; }
+        .history-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+        .history-table th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #eee; color: #666; }
+        .history-table td { padding: 12px; border-bottom: 1px solid #f1f1f1; vertical-align: middle; }
+        .suggestion-box { position: absolute; background: white; border: 1px solid #ddd; width: 100%; z-index: 100; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+        .suggestion-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
+        .backup-controls { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; }
+        .action-btns { display: flex; gap: 8px; }
+        .btn-load { background: var(--fucxia); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-delete-reg { background: #eee; color: #666; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        @media (min-width: 600px) { .backup-controls { flex-direction: row; } }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="app-logo-container">
+        <button class="btn-del-circle" id="delAppMain" onclick="deleteImg('app')">✕</button>
+        <img id="appLogoImg">
+        <div id="appUploadBox" class="upload-box">
+            <label for="inApp">📁 SUBIR LOGO APP</label>
+            <input type="file" id="inApp" accept="image/*" class="hidden">
+        </div>
+        <h2 style="margin: 5px 0; color: var(--fucxia); font-size: 22px;">Fucxia Tags V3.0</h2>
+    </div>
+
+    <div class="logo-section">
+        <div class="upload-box">
+            <button class="btn-del-circle" id="delTagBtn" style="top:-8px; right:-8px;" onclick="deleteImg('tag')">✕</button>
+            <label for="inTag">📁 LOGO ETIQUETA</label>
+            <input type="file" id="inTag" accept="image/*" class="hidden">
+            <img id="prevTag" class="small-preview">
+        </div>
+        <div class="upload-box">
+            <button class="btn-del-circle" id="delWmkBtn" style="top:-8px; right:-8px;" onclick="deleteImg('wmk')">✕</button>
+            <label for="inWmk">📁 MARCA AGUA</label>
+            <input type="file" id="inWmk" accept="image/*" class="hidden">
+            <img id="prevWmk" class="small-preview">
+        </div>
+    </div>
+
+    <div class="dimensions">
+        <div><label class="field-title">Altura (cm)</label><input type="number" id="hCm" value="10" step="0.1"></div>
+        <div><label class="field-title">Largo (cm)</label><input type="number" id="wCm" value="15" step="0.1"></div>
+    </div>
+
+    <div class="input-group">
+        <label class="field-title">Remitente</label>
+        <select id="remitente">
+            <option value="INGRID FLORES DEL AGUILA">Ingrid Flores Del Aguila</option>
+            <option value="ANGEL DIAZ">Angel Diaz</option>
+            <option value="GLADYS FLORES">Gladys Flores</option>
+        </select>
+    </div>
+
+    <div class="input-group">
+        <label class="field-title">Nombre del Cliente</label>
+        <input type="text" id="cliente" placeholder="Nombre completo" autocomplete="off" oninput="forceUpper(this); searchByField('nombre', 'cliente', 'suggestionsName')">
+        <div id="suggestionsName" class="suggestion-box"></div>
+    </div>
+
+    <div class="dimensions" style="padding:0; background:none;">
+        <div class="input-group">
+            <label class="field-title">DNI</label>
+            <input type="text" id="dni" placeholder="12345678" autocomplete="off" oninput="searchByField('dni', 'dni', 'suggestionsDni')">
+            <div id="suggestionsDni" class="suggestion-box"></div>
+        </div>
+        <div class="input-group">
+            <label class="field-title">Teléfono</label>
+            <input type="text" id="cel" placeholder="999 999 999">
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label class="field-title">Empresa de Envío</label>
+        <select id="courier" onchange="toggleCourier()">
+            <option value="SHALOM">Shalom</option>
+            <option value="OTROS">Otros</option>
+        </select>
+        <div id="shalomActionBox"><button class="btn-shalom" onclick="window.open('https://agencias.shalom.pe/', '_blank')">🔍 BUSCAR AGENCIA SHALOM</button></div>
+        <div id="boxOthers" class="hidden" style="background: #f0f7ff; padding: 10px; border-radius: 8px; margin-top: 10px;">
+            <label class="field-title">Agencia:</label><input type="text" id="manualCourier" placeholder="Nombre de la agencia" oninput="forceUpper(this)">
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label class="field-title">Destino</label>
+        <textarea id="destino" placeholder="Dirección de Oficina / Agencia" oninput="forceUpper(this)"></textarea>
+    </div>
+
+    <button class="btn-main" onclick="processTag()">GENERAR ETIQUETA</button>
+</div>
+
+<div class="history-section">
+    <h3 style="margin: 0 0 15px 0; font-size: 18px; color: var(--fucxia);">📁 Directorio e historial</h3>
+    <div class="table-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th width="15%">Fecha / Hora</th>
+                    <th width="18%">Nombre</th>
+                    <th width="10%">DNI</th>
+                    <th width="10%">Teléfono</th>
+                    <th width="10%">Empresa</th>
+                    <th width="22%">Dirección</th>
+                    <th width="15%">Acción</th>
+                </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+        </table>
+    </div>
+    <div class="backup-controls">
+        <button class="btn-backup" onclick="exportData()">📥 EXPORTAR BACKUP</button>
+        <button class="btn-import" onclick="document.getElementById('importFile').click()">📤 IMPORTAR BACKUP</button>
+        <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(this)">
+    </div>
+</div>
+
+<script>
+    let imgs = { app: localStorage.getItem('app')||"", tag: localStorage.getItem('tag')||"", wmk: localStorage.getItem('wmk')||"" };
+    let directory = JSON.parse(localStorage.getItem('directory') || "[]");
+    let wmkRatio = 0.56;
+
+    window.onload = () => {
+        updateUI();
+        renderHistory();
+        calculateWmkRatio();
+        toggleCourier();
+        checkURLParams();
+    };
+
+    // SEGURIDAD: Sanitiza textos de la URL para evitar ataques
+    function sanitize(str) {
+        const temp = document.createElement('div');
+        temp.textContent = str;
+        return temp.innerHTML;
+    }
+
+    function checkURLParams() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('nombre')) {
+            document.getElementById('cliente').value = sanitize(params.get('nombre')).toUpperCase();
+            document.getElementById('dni').value = sanitize(params.get('dni') || "");
+            document.getElementById('cel').value = sanitize(params.get('cel') || "");
+            document.getElementById('destino').value = sanitize(params.get('destino') || "").toUpperCase();
+            if (params.has('courier')) {
+                const cVal = sanitize(params.get('courier')).toUpperCase();
+                const sel = document.getElementById('courier');
+                if (cVal === 'SHALOM') { sel.value = 'SHALOM'; }
+                else { sel.value = 'OTROS'; document.getElementById('manualCourier').value = cVal; }
+                toggleCourier();
+            }
+        }
+    }
+
+    function forceUpper(el) { el.value = el.value.toUpperCase(); }
+    function calculateWmkRatio() { if(imgs.wmk) { let img = new Image(); img.src = imgs.wmk; img.onload = function() { wmkRatio = this.height / this.width; } } }
+
+    function updateUI() {
+        const appImg = document.getElementById('appLogoImg');
+        const appBox = document.getElementById('appUploadBox');
+        const delApp = document.getElementById('delAppMain');
+        if(imgs.app) { appImg.src = imgs.app; appImg.style.display = 'block'; appBox.classList.add('hidden'); delApp.style.display = 'block'; }
+        else { appImg.style.display = 'none'; appBox.classList.remove('hidden'); delApp.style.display = 'none'; }
+        ['tag', 'wmk'].forEach(k => {
+            const prev = document.getElementById('prev' + k.charAt(0).toUpperCase() + k.slice(1));
+            const btn = document.getElementById('del' + k.charAt(0).toUpperCase() + k.slice(1) + 'Btn');
+            if(imgs[k]) { prev.src = imgs[k]; prev.style.display = 'block'; btn.style.display = 'block'; }
+            else { prev.style.display = 'none'; btn.style.display = 'none'; }
+        });
+    }
+
+    function deleteImg(k) { imgs[k] = ""; localStorage.removeItem(k); updateUI(); }
+
+    ['inApp','inTag','inWmk'].forEach(id => {
+        document.getElementById(id).onchange = (e) => {
+            const reader = new FileReader(); const k = id.replace('in','').toLowerCase();
+            reader.onload = () => { imgs[k] = reader.result; localStorage.setItem(k, reader.result); updateUI(); if(k==='wmk') calculateWmkRatio(); };
+            reader.readAsDataURL(e.target.files[0]);
+        };
+    });
+
+    function toggleCourier() {
+        const isShalom = document.getElementById('courier').value === 'SHALOM';
+        document.getElementById('shalomActionBox').classList.toggle('hidden', !isShalom);
+        document.getElementById('boxOthers').classList.toggle('hidden', isShalom);
+    }
+
+    function searchByField(dataKey, inputId, suggestionBoxId) {
+        const val = document.getElementById(inputId).value.toUpperCase();
+        const box = document.getElementById(suggestionBoxId);
+        box.innerHTML = "";
+        if(val.length < 2) { box.style.display = 'none'; return; }
+        const matches = directory.filter(c => c[dataKey].toString().toUpperCase().includes(val));
+        if(matches.length > 0) {
+            box.style.display = 'block';
+            matches.forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.innerHTML = `<strong>${m.nombre}</strong><br><small>DNI: ${m.dni}</small>`;
+                div.onclick = () => fillData(m);
+                box.appendChild(div);
+            });
+        } else { box.style.display = 'none'; }
+    }
+
+    function fillData(m) {
+        document.getElementById('cliente').value = m.nombre;
+        document.getElementById('dni').value = m.dni;
+        document.getElementById('cel').value = m.cel;
+        document.getElementById('destino').value = m.destino;
+        if(m.courier) {
+            document.getElementById('courier').value = m.courier;
+            if(m.courier === 'OTROS') document.getElementById('manualCourier').value = m.manual || "";
+            toggleCourier();
+        }
+        document.querySelectorAll('.suggestion-box').forEach(b => b.style.display = 'none');
+    }
+
+    function renderHistory() {
+        const body = document.getElementById('historyBody');
+        body.innerHTML = "";
+        const sorted = [...directory].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+        sorted.forEach((t) => {
+            const dateObj = new Date(t.fecha);
+            const dStr = dateObj.toLocaleDateString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric' });
+            const tStr = dateObj.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit', hour12: true }).toUpperCase();
+            const eStr = t.courier === 'OTROS' ? t.manual : 'SHALOM';
+            body.innerHTML += `<tr>
+                <td style="color:#666">${dStr}<br>${tStr}</td>
+                <td><strong>${t.nombre}</strong></td>
+                <td>${t.dni}</td>
+                <td>${t.cel}</td>
+                <td style="color:var(--fucxia); font-weight:bold;">${eStr}</td>
+                <td style="white-space: pre-wrap;">${t.destino}</td>
+                <td><div class="action-btns">
+                    <button class="btn-load" onclick='fillData(${JSON.stringify(t)})'>CARGAR</button>
+                    <button class="btn-delete-reg" onclick='deleteRecord("${t.dni}", "${t.nombre}")'>ELIMINAR</button>
+                </div></td>
+            </tr>`;
+        });
+    }
+
+    function deleteRecord(dni, nombre) {
+        if(confirm(`¿Estás seguro que quieres eliminar el registro de ${nombre}?`)) {
+            directory = directory.filter(c => (c.dni !== dni || dni === "") && (c.nombre !== nombre || dni !== ""));
+            localStorage.setItem('directory', JSON.stringify(directory));
+            renderHistory();
+        }
+    }
+
+    function processTag() {
+        const data = {
+            nombre: document.getElementById('cliente').value.toUpperCase(),
+            dni: document.getElementById('dni').value,
+            cel: document.getElementById('cel').value,
+            destino: document.getElementById('destino').value.toUpperCase(),
+            courier: document.getElementById('courier').value,
+            manual: (document.getElementById('courier').value === 'OTROS') ? document.getElementById('manualCourier').value.toUpperCase() : "SHALOM",
+            fecha: new Date().toISOString()
+        };
+        if(!data.nombre || !data.destino) return alert("Faltan datos.");
+        const exIdx = directory.findIndex(c => (c.dni === data.dni && data.dni !== "") || (c.nombre === data.nombre && data.dni === ""));
+        if(exIdx !== -1) { directory[exIdx] = data; } else { directory.push(data); }
+        localStorage.setItem('directory', JSON.stringify(directory));
+        renderHistory();
+        generatePDF();
+    }
+
+    function exportData() {
+        const blob = new Blob([JSON.stringify({directory})], { type: 'application/json' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = `Backup_Fucxia_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+    }
+
+    function importData(input) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                directory = data.directory || [];
+                localStorage.setItem('directory', JSON.stringify(directory));
+                renderHistory();
+                alert("Éxito.");
+            } catch(err) { alert("Error."); }
+        };
+        reader.readAsText(input.files[0]);
+    }
+
+    function drawTag(doc, x, y, w, h, data) {
+        doc.setLineWidth(0.26); doc.setDrawColor(0); doc.rect(x, y, w, h);
+        const margin = 5; const usableW = w - (margin * 2);
+        const logoSize = Math.min(h * 0.20, 30);
+        const headerPad = logoSize * 0.12;
+        if(imgs.tag) doc.addImage(imgs.tag, 'PNG', x + margin, y + headerPad, logoSize, logoSize);
+        const lineY = y + headerPad + logoSize + headerPad;
+        doc.setDrawColor(239, 21, 124); doc.setLineWidth(0.7); doc.line(x, lineY, x + w, lineY);
+        if(imgs.wmk) {
+            doc.setGState(new doc.GState({opacity: 0.1}));
+            const long = Math.max(w, h); const wmkW = long * 0.5; const wmkH = wmkW * wmkRatio;
+            if(h > w) doc.addImage(imgs.wmk, 'PNG', x + w/2, y + h/2, wmkH, wmkW, null, 'NONE', 90);
+            else doc.addImage(imgs.wmk, 'PNG', x + w/2 - wmkW/2, y + h/2 - wmkH/2, wmkW, wmkH);
+        }
+        doc.setGState(new doc.GState({opacity: 1}));
+        const startYBase = lineY + 1.7;
+        const lines = [{l: "PARA: ", c: data.nombre}, {l: "DNI: ", c: data.dni}, {l: "CEL: ", c: data.cel}, {l: "DESTINO: ", c: data.destino}];
+        let fontSize = 70; const spacing = 0.44; const limitY = y + h - 3.5;
+        while(fontSize > 6) {
+            doc.setFontSize(fontSize);
+            let checkY = startYBase + (fontSize * 0.75);
+            let fits = true;
+            for(let line of lines) {
+                const sl = doc.splitTextToSize(line.l + line.c, usableW);
+                checkY += (sl.length * fontSize * spacing);
+                if(checkY > limitY) { fits = false; break; }
+            }
+            if(fits) break;
+            fontSize -= 0.3;
+        }
+        doc.setTextColor(239, 21, 124); doc.setFont("helvetica", "bold");
+        let rFS = 18; let rLines = [];
+        while(rFS > 6) {
+            doc.setFontSize(rFS);
+            rLines = doc.splitTextToSize("DE: " + document.getElementById('remitente').value, usableW - logoSize - 5);
+            if(rLines.length <= 2 && (rLines.length * rFS * 0.5) <= logoSize) break;
+            rFS -= 0.5;
+        }
+        const rY = y + headerPad + (logoSize/2) - ((rLines.length-1)*rFS*0.25) + (rFS*0.2);
+        rLines.forEach((rl, i) => doc.text(rl, x + margin + logoSize + 5, rY + (i * rFS * 0.5)));
+        let curY = startYBase + (fontSize * 0.75);
+        lines.forEach(obj => {
+            doc.setFontSize(fontSize); doc.setTextColor(239, 21, 124); doc.setFont("helvetica", "bold");
+            const labelW = doc.getTextWidth(obj.l);
+            doc.text(obj.l, x + margin, curY);
+            doc.setTextColor(0); doc.setFont("helvetica", (obj.l.includes("PARA"))?"bold":"normal");
+            const split = doc.splitTextToSize(obj.c, usableW - labelW);
+            split.forEach((t, idx) => { doc.text(t, (idx === 0) ? (x + margin + labelW) : (x + margin), curY); curY += fontSize * spacing; });
+        });
+    }
+
+    function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        let hCm = parseFloat(document.getElementById('hCm').value);
+        let wCm = parseFloat(document.getElementById('wCm').value);
+        const hm = hCm * 10, wm = wCm * 10;
+        const data = { nombre: document.getElementById('cliente').value.toUpperCase(), dni: document.getElementById('dni').value, cel: document.getElementById('cel').value, courier: document.getElementById('courier').value, manual: document.getElementById('manualCourier').value, destino: document.getElementById('destino').value.toUpperCase() };
+        let orient = (wm > 210) ? 'l' : 'p';
+        const doc = new jsPDF(orient, 'mm', 'a4');
+        const pW = (orient === 'p') ? 210 : 297; const pH = (orient === 'p') ? 297 : 210;
+        const xPos = (pW - wm) / 2;
+        drawTag(doc, xPos, 10, wm, hm, data);
+        const nextY = 10 + hm + 10;
+        if(nextY + hm <= pH - 10) drawTag(doc, xPos, nextY, wm, hm, data);
+        else { doc.addPage(); drawTag(doc, xPos, 10, wm, hm, data); }
+        doc.save(`Fucxia_Etiqueta_${data.nombre}.pdf`);
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.input-group')) {
+            document.querySelectorAll('.suggestion-box').forEach(b => b.style.display = 'none');
+        }
+    });
+</script>
+</body>
+</html>
